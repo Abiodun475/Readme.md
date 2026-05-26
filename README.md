@@ -2,6 +2,14 @@
 Race Condition (TOCTOU)
 # Web Application Security Assessment: Core Banking Concurrency Vulnerability
 
+
+## Legal Disclaimer
+
+This project and accompanying documentation are intended strictly for educational and authorized security research purposes within controlled lab environments.
+No real-world banking infrastructure or unauthorized systems were targeted. All sensitive data, IP addresses, session tokens, and identifiers have been sanitized or redacted.
+The content is provided to demonstrate secure coding weaknesses, race condition exploitation mechanics, and defensive remediation strategies for application security learning purposes only.
+
+
 ## Executive Summary
 [cite_start]A critical **Time-of-Check to Time-of-Use (TOCTOU) Race Condition** was identified within the funds-transfer and credit-recharge mechanisms of the target application[cite: 3]. [cite_start]The platform fails to process balance validation and account adjustments as an atomic transaction[cite: 4]. [cite_start]By issuing synchronized concurrent requests, an attacker can bypass transaction limits and account balance verifications[cite: 5]. [cite_start]This flaw allows users to generate unbacked credit, manipulate balances, and execute unauthorized transfers[cite: 6].
 
@@ -101,4 +109,20 @@ UPDATE accounts SET balance = balance + 210 WHERE account_id = 4621;
 COMMIT;
 
 
-Alternative ControlsDatabase Constraints: Add an unsigned check constraint (ALTER TABLE accounts ADD CONSTRAINT chk_balance CHECK (balance >= 0);) to reject negative balances at the engine level.Distributed Locking: For microservices, use Redis-backed distributed locks tied to the unique User ID to enforce single-thread request execution.5. Detection & Monitoring RecommendationsSIEM Detection RulesHigh-Frequency Thresholds: Alert when a single authenticated session ID generates more than 10 state-changing requests (POST / PUT) to transaction endpoints within a 100-millisecond window.  Database Anomalies: Monitor for sudden spikes in database deadlock exceptions or serialization failures (SQLSTATE 40001).  Fraud MitigationMicro-Reconciliation Daemons: Deploy background processes to continuously reconcile account balances (Starting Balance + Interventions - Outflow). Flag and freeze any account showing a ledger mismatch.  
+Alternative Controls
+
+Database Constraints:
+Add an unsigned check constraint (ALTER TABLE accounts ADD CONSTRAINT chk_balance CHECK (balance >= 0);) to reject negative balances at the engine level.
+Distributed Locking: For microservices, use Redis-backed distributed locks tied to the unique User ID to enforce single-thread request execution.
+
+
+Detection & Monitoring Recommendations
+
+SIEM Detection Rules
+High-Frequency Thresholds: Alert when a single authenticated session ID generates more than 10 state-changing requests (POST / PUT) to transaction endpoints within a 100-millisecond window. 
+Database Anomalies: Monitor for sudden spikes in database deadlock exceptions or serialization failures (SQLSTATE 40001). 
+
+Fraud Mitigation 
+
+Micro-Reconciliation Daemons: Deploy background processes to continuously reconcile account balances (Starting Balance + Interventions - Outflow).
+Flag and freeze any account showing a ledger mismatch.  
